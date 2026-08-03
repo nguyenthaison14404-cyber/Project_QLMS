@@ -1,4 +1,5 @@
 const Sach = require('../models/Sach');
+const TheoDoiMuonSach = require('../models/TheoDoiMuonSach'); // Đã cập nhật đúng tên file TheoDoiMuonSach.js
 
 // Hàm kiểm tra các trường số không được âm
 const validateSachData = (item) => {
@@ -55,8 +56,8 @@ exports.update = async (req, res) => {
             req.params.id, 
             req.body, 
             { 
-                returnDocument: 'after', // Sửa warning { new: true }
-                runValidators: true      // Ép Mongoose chạy kiểm tra Validation từ Schema
+                returnDocument: 'after',
+                runValidators: true 
             }
         );
 
@@ -73,10 +74,32 @@ exports.update = async (req, res) => {
 // Xóa sách
 exports.delete = async (req, res) => {
     try {
-        const deleted = await Sach.findByIdAndDelete(req.params.id);
-        if (!deleted) {
+        // 1. Tìm thông tin sách cần xóa
+        const sach = await Sach.findById(req.params.id);
+        if (!sach) {
             return res.status(404).json({ message: 'Không tìm thấy sách để xóa!' });
         }
+
+        // 2. Kiểm tra xem sách đã từng xuất hiện trong danh sách Theo Dõi Mượn Sách chưa
+        const isBorrowed = await TheoDoiMuonSach.findOne({
+            $or: [
+                { maSach: sach.maSach },
+                { maSach: sach._id },
+                { maSach: req.params.id },
+                { MaSach: sach.maSach },
+                { MaSach: sach._id },
+                { MaSach: req.params.id }
+            ]
+        });
+
+        if (isBorrowed) {
+            return res.status(400).json({ 
+                message: 'Không thể xóa sách do đã có trong danh sách theo dõi mượn trả!' 
+            });
+        }
+
+        // 3. Tiến hành xóa nếu không có ràng buộc mượn trả
+        await Sach.findByIdAndDelete(req.params.id);
         res.status(200).json({ message: 'Đã xóa sách thành công!' });
     } catch (err) {
         res.status(500).json({ message: err.message });

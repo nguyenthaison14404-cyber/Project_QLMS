@@ -1,4 +1,5 @@
 const DocGia = require('../models/DocGia');
+const TheoDoiMuonSach = require('../models/TheoDoiMuonSach'); // Đã sửa tên biến trùng khớp
 
 // Hàm kiểm tra định dạng số điện thoại (đúng 10 chữ số, không chứa ký tự khác)
 const validatePhone = (phone) => {
@@ -45,7 +46,6 @@ exports.create = async (req, res) => {
     } catch (err) {
         // BẮT LỖI TRÙNG MÃ (E11000) TỪ MONGODB
         if (err.code === 11000) {
-            // Lấy giá trị mã bị trùng (ví dụ: "DG01")
             const duplicateValue = err.keyValue ? Object.values(err.keyValue)[0] : '';
             const message = duplicateValue
                 ? `Mã độc giả "${duplicateValue}" đã tồn tại trong hệ thống!`
@@ -72,8 +72,8 @@ exports.update = async (req, res) => {
             req.params.id, 
             req.body, 
             { 
-                returnDocument: 'after', // Sửa warning { new: true }
-                runValidators: true      // Bắt buộc chạy Validation từ Schema khi Update
+                returnDocument: 'after', 
+                runValidators: true 
             }
         );
 
@@ -90,10 +90,27 @@ exports.update = async (req, res) => {
 // Xóa độc giả
 exports.delete = async (req, res) => {
     try {
-        const deleted = await DocGia.findByIdAndDelete(req.params.id);
-        if (!deleted) {
+        const docGia = await DocGia.findById(req.params.id);
+        if (!docGia) {
             return res.status(404).json({ message: 'Không tìm thấy độc giả để xóa!' });
         }
+
+        // KIỂM TRA RÀNG BUỘC: Độc giả có nằm trong lịch sử mượn trả không
+        const isBorrowing = await TheoDoiMuonSach.findOne({
+            $or: [
+                { maDocGia: docGia.maDocGia },
+                { maDocGia: docGia._id }
+            ]
+        });
+
+        // Thông báo tùy chỉnh khi phát hiện độc giả đang mượn / có lịch sử mượn
+        if (isBorrowing) {
+            return res.status(400).json({
+                message: `Không thể xóa độc giả "${docGia.hoLot} ${docGia.ten}" do người này đang mượn sách hoặc có lịch sử mượn trả!`
+            });
+        }
+
+        await DocGia.findByIdAndDelete(req.params.id);
         res.status(200).json({ message: 'Đã xóa độc giả thành công!' });
     } catch (err) {
         res.status(500).json({ message: err.message });

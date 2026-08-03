@@ -430,7 +430,7 @@ const deleteNXB = async (id) => {
       title: "Không thể xóa",
       text:
         err.response?.data?.message ||
-        "Xóa thất bại! NXB này có thể đang chứa danh mục sách trong thư viện.",
+        "Xóa thất bại! NXB này có thể đang chứa danh mục sách trong kho.",
       confirmButtonColor: "#9a3412",
     });
   }
