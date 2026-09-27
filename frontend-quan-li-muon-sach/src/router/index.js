@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/LoginView.vue';
 import NhaXuatBanView from '../views/NhaXuatBanView.vue';
 import SachView from '../views/SachView.vue';
-import DocGiaView from '../views/DocGiaView.vue';
 import MuonSachView from '../views/MuonSachView.vue';
 import NhanVienView from '../views/NhanVienView.vue';
 
@@ -25,12 +24,6 @@ const routes = [
     path: '/sach',
     name: 'Sach',
     component: SachView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/doc-gia',
-    name: 'DocGia',
-    component: DocGiaView,
     meta: { requiresAuth: true },
   },
   {

@@ -55,7 +55,6 @@
               to="/doc-gia"
               active-class="active"
             >
-              <i class="bi bi-people-fill me-2 icon-accent"></i> Độc Giả
             </router-link>
           </li>
           <li class="nav-item">
